@@ -1,56 +1,47 @@
 
 # lib/page-view
 
-{$, View} = require 'atom'
+{$, View} = require 'atom-space-pen-views'
+SubAtom   = require 'sub-atom'
 
 module.exports =
 class PageView extends View
   
   @content: ->
     @div class:'browser-page', tabindex:-1, =>
-      @iframe
-        outlet:   'iframe'
-        class:    'iframe'
-        name:     'browser-page-disable-x-frame-options'
-        sandbox:  'allow-forms allow-popups allow-pointer-lock allow-same-origin allow-scripts'
-        allowfullscreen: yes
-        
+      @tag 'webview', 
+        outlet:            'webview'
+        plugins:            yes
+        disablewebsecurity: yes
+  
   initialize: (page) ->
+    @subs = new SubAtom
     page.setView @
     browser     = page.getBrowser()
     omniboxView = browser.getOmniboxView()
-    tabBarView  = atom.workspaceView.find('.pane.active').find('.tab-bar').view()
+    tabBarView  = $(atom.views.getView(atom.workspace.getActivePane())).find('.tab-bar').view()
     tabView     = tabBarView.tabForItem page
     $tabView    = $ tabView
     url         = page.getPath()
     
-    #debug
-    # @subscribe @, 'click', (e) => console.log 'PageView click', e.ctrlKey
-    
     @setLocation url
     
-    @subscribe @iframe, 'load', =>
-      $document  = @iframe.contents()
-      url        = $document[0].URL
-      $head      = $document.find 'head'
-      $body      = $document.find 'body'
-      title      = $head.find('title').text()
+    @subs.add @webview, 'did-start-loading', =>
+      url   = @webview[0].getUrl()
+      title = @webview[0].getTitle()
       page.locationChanged url
       page.setTitle title
       
-      # $body.append "<script>console.log('xxx')</script>"
-      # console.log '@iframe.contents', {url, title}
-      
     @$tabFavicon = $ '<img class="tab-favicon">'
     $tabView.append @$tabFavicon
-    $tabView.find('.title').css paddingLeft: 20
+    $tabView.find('.title').css paddingLeft: '2.7em'
   
   setFaviconDomain: (domain) -> 
     @$tabFavicon.attr src: "http://www.google.com/s2/favicons?domain=#{domain}"
     
-  setLocation: (url) -> @iframe.attr src: url
+  setLocation: (url) -> @webview.attr src: url
     
   destroy: ->
-    clearInterval @urlInterval
+    @subs.dispose?()
     @detach()
 

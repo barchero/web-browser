@@ -1,7 +1,8 @@
 
 # lib/omnibox-view
         
-{View}  = require 'atom'
+{View}  = require 'atom-space-pen-views'
+SubAtom = require 'sub-atom'
 
 module.exports =
 class OmniboxView extends View
@@ -14,7 +15,8 @@ class OmniboxView extends View
         class: 'native-key-bindings'
 
   initialize: (browser) ->
-    @subscribe @input, 'keydown', (e) =>
+    @subs = new SubAtom
+    @subs.add @input, 'keydown', (e) =>
       url = @input.val()
       if not /^\w+:\/\//.test url then url = 'http://' + url
       switch e.which
@@ -27,11 +29,11 @@ class OmniboxView extends View
       false
       
     # var @focused is used in pageView for speed
-    @subscribe @input, 'focus', =>
+    @subs.add @input, 'focus', =>
       @focused = yes
       @focusCallback? yes
           
-    @subscribe @input, 'blur', =>
+    @subs.add @input, 'blur', =>
       @focused = no
       @focusCallback? no
     
@@ -41,5 +43,5 @@ class OmniboxView extends View
   setText: (text) -> @input.val text
 
   destroy: ->
-    @unsubscribe()
+    @subs.dispose()
     @detach()

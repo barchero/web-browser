@@ -3,6 +3,7 @@
 
 {$, View}  = require 'atom'
 OmniboxView = require './omnibox-view'
+SubAtom = require 'sub-atom'
 
 module.exports =
 class ToolbarView extends View
@@ -23,6 +24,7 @@ class ToolbarView extends View
         @span class:'octicon browser-btn octicon-three-bars'
         
   initialize: (browser) ->
+    @subs = new SubAtom
     atom.workspaceView.prependToTop @
     @omniboxView = new OmniboxView browser
     @omniboxContainer.append @omniboxView
@@ -31,7 +33,7 @@ class ToolbarView extends View
     @omniboxView.onFocusChg (@isFocused) => 
       if @isFocused then @navBtnsRgt.hide() else @navBtnsRgt.show()
     
-    @subscribe @, 'click', (e) ->
+    @subs.add @, 'click', (e) ->
       if (classes = $(e.target).attr 'class') and 
          (btnIdx  = classes.indexOf 'octicon-') > -1
         switch classes[btnIdx+8...]
@@ -52,7 +54,7 @@ class ToolbarView extends View
     @favicon.attr src: "http://www.google.com/s2/favicons?domain=#{domain}"
     
   destroy: ->
-    @unsubscribe()
+    @subs.dispose()
     @detach()
 
 ###

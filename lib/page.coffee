@@ -1,15 +1,12 @@
 
 # lib/page
 
-{Emitter} = require 'emissary'
 PageView  = require './page-view'
 History   = require './history'
 urlUtil   = require 'url'
 
 module.exports =
 class Page
-  Emitter.includeInto @
-
   constructor: (@browser, @url) -> @history = new History @url
 
   setTitle: (@title) ->
@@ -31,7 +28,7 @@ class Page
     @browser.setOmniText @url
     faviconDomain = urlUtil.parse(@url).hostname
     @pageView?.setFaviconDomain faviconDomain
-    @browser.setFaviconDomain faviconDomain
+    @browser  .setFaviconDomain faviconDomain
   
   setView: (@pageView) ->
   getBrowser:   -> @browser

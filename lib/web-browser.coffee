@@ -3,11 +3,14 @@
 
 Toolbar = require './toolbar'
 Page    = require './page'
+SubAtom = require 'sub-atom'
 
 class WebBrowser
   activate: ->
-    atom.webBrowser = @ 
-    atom.workspaceView.command "web-browser:toggle", =>
+    # atom.webBrowser = @ 
+    
+    @subs = new SubAtom
+    atom.commands.add 'atom-workspace', 'web-browser:toggle': =>
       @toolbar ?= new Toolbar @
       switch
         when not @toolbar.visible()
@@ -25,7 +28,7 @@ class WebBrowser
       if /^https?:\/\//.test filePath
         new Page @, filePath
         
-    atom.workspace.registerOpener @opener
+    @subs.add atom.workspace.addOpener @opener
     
   getToolbar:                -> @toolbar
   getOmniboxView:            -> @toolbar?.getOmniboxView()
@@ -38,8 +41,8 @@ class WebBrowser
     
   createPage: (url) ->
     @toolbar ?= new Toolbar @
-    atom.workspace.activePane.activateItem new Page @, url
-    
+    atom.workspace.getActivePane().activateItem new Page @, url
+
   setLocation: (url) ->
     @toolbar ?= new Toolbar @
     @toolbar.setOmniText url
@@ -55,6 +58,6 @@ class WebBrowser
   refresh: -> @getActivePage()?.refresh()
   
   deactivate: ->
-    atom.workspace.unregisterOpener @opener
+    @subs.dispose()
     
 module.exports = new WebBrowser
